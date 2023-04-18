@@ -25,7 +25,7 @@ int keys[NKEYS];
 int nthread = 1;
 volatile int done;
 
-// The lock that serializes get()'s and put()'s.
+// The lock that serializes put()'s.
 pthread_mutex_t lock;
 
 double now() {
@@ -65,21 +65,16 @@ static void put(int key, int value) {
   assert(0);
 }
 
-// Lookup key in hash table.  The lock serializes the lookups.
+// Lookup key in hash table.
 static int get(int key) {
-  assert(pthread_mutex_lock(&lock) == 0);
   int b = key % NBUCKET;
   int i;
-  int v = -1;
   for (i = 0; i < NENTRY; i++) {
     if (table[b][i].key == key && table[b][i].inuse)  {
-      v = table[b][i].value;
-      break;
+      return table[b][i].value;
     }
   }
-
-  assert(pthread_mutex_unlock(&lock) == 0);
-  return v;
+  return -1;
 }
 
 static void *put_thread(void *xa) {
