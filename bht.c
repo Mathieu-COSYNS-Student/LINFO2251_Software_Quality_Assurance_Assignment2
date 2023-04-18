@@ -26,7 +26,7 @@ int nthread = 1;
 volatile int done;
 
 // The lock that serializes put()'s.
-pthread_mutex_t lock;
+pthread_mutex_t* bucket_locks;
 
 double now() {
  struct timeval tv;
@@ -52,13 +52,13 @@ static void put(int key, int value) {
   int b = key % NBUCKET;
   int i;
   // Loop up through the entries in the bucket to find an unused one:
-  assert(pthread_mutex_lock(&lock) == 0);
+  assert(pthread_mutex_lock(&bucket_locks[b]) == 0);
   for (i = 0; i < NENTRY; i++) {
     if (!table[b][i].inuse) {
       table[b][i].key = key;
       table[b][i].value = value;
       table[b][i].inuse = 1;
-      assert(pthread_mutex_unlock(&lock) == 0);
+      assert(pthread_mutex_unlock(&bucket_locks[b]) == 0);
       return;
     }
   }
@@ -113,7 +113,10 @@ int main(int argc, char *argv[]) {
   nthread = atoi(argv[1]);
 
   // Initialize lock
-  assert(pthread_mutex_init(&lock, NULL) == 0);
+  bucket_locks = malloc(sizeof(pthread_mutex_t)*NBUCKET);
+  for (i = 0; i < NBUCKET; i++) {
+    assert(pthread_mutex_init(&bucket_locks[i], NULL) == 0);
+  }
 
   // Allocate handles for pthread_join() below.
   tha = malloc(sizeof(pthread_t)*nthread);
@@ -153,5 +156,6 @@ int main(int argc, char *argv[]) {
 
   printf("completion time for get phase = %f\n", t1-t0);
 
+  free(bucket_locks);
   free(tha);
 }
