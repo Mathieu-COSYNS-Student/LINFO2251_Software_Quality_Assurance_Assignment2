@@ -19,6 +19,11 @@ all: $(BHT)
 $(BHT): bht.c
 	$(CC) $(FLAGS) -o $@ bht.c
 
+memcheck: $(BHT)
+	valgrind --leak-check=full ./$(BHT) 1
+	valgrind --leak-check=full ./$(BHT) 2
+	valgrind --leak-check=full ./$(BHT) 4
+
 clean:
 	@$(RM) -rv $(BHT)
 
