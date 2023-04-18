@@ -25,7 +25,7 @@ int keys[NKEYS];
 int nthread = 1;
 volatile int done;
 
-// The lock that serializes get()'s.
+// The lock that serializes get()'s and put()'s.
 pthread_mutex_t lock;
 
 double now() {
@@ -52,11 +52,13 @@ static void put(int key, int value) {
   int b = key % NBUCKET;
   int i;
   // Loop up through the entries in the bucket to find an unused one:
+  assert(pthread_mutex_lock(&lock) == 0);
   for (i = 0; i < NENTRY; i++) {
     if (!table[b][i].inuse) {
       table[b][i].key = key;
       table[b][i].value = value;
       table[b][i].inuse = 1;
+      assert(pthread_mutex_unlock(&lock) == 0);
       return;
     }
   }

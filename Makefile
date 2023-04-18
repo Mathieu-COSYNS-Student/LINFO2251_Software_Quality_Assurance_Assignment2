@@ -24,6 +24,11 @@ memcheck: $(BHT)
 	valgrind --leak-check=full ./$(BHT) 2
 	valgrind --leak-check=full ./$(BHT) 4
 
+racecheck: $(BHT)
+	valgrind --tool=helgrind ./$(BHT) 1
+	valgrind --tool=helgrind ./$(BHT) 2
+	valgrind --tool=helgrind ./$(BHT) 4
+
 clean:
 	@$(RM) -rv $(BHT)
 
